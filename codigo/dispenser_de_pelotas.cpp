@@ -18,7 +18,6 @@
 #define SERVO_OPEN 0
 #define SERVO_CLOSE 180
 Servo Servomotor;
-void servo_init();
 
 //---------------------------
 // DISTANCE SENSOR INIT
@@ -117,13 +116,25 @@ void catch_event()
 {
 
 }
+// ------------------------------------------------
+// FUNCTIONS INIT
+// ------------------------------------------------
+servo_init()
+distance_sensor_dog_init();
+distance_sensor_ball_init();
+rgb_init();
+button_init();
 
 // ------------------------------------------------
 // Inicialización
 // ------------------------------------------------
 void start()
 {
-
+    servo_init()
+    distance_sensor_dog_init();
+    distance_sensor_ball_init();
+    rgb_init();
+    button_init();
 }
 
 // ------------------------------------------------
@@ -284,13 +295,34 @@ void fsm()
 //---------------------------
 // Servo Implementacion
 //---------------------------
-
 void servo_init()
 {
   Servomotor.attach(SERVO_PIN);
   Servomotor.write(SERVO_CLOSE);
 }
 
+void distance_sensor_dog_init()
+{
+
+}
+
+void distance_sensor_ball_init()
+{
+
+}   
+
+void rgb_init()
+{
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
+  pinMode(PIN_LED_BLUE, OUTPUT);
+  // En que color se inicia?
+}
+
+void button_init()
+{
+    pinMode(PIN_BUTTON, INPUT); 
+}
 // ------------------------------------------------
 // Arduino setup
 // ------------------------------------------------
