@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 // ------------------------------------------------
 // Etiquetas
 // ------------------------------------------------
@@ -9,6 +11,32 @@
 // ------------------------------------------------
 #define VALUE_CONTINUE -1
 
+//---------------------------
+// SERVO INIT
+//---------------------------
+#define SERVO_PIN 9
+#define SERVO_OPEN 0
+#define SERVO_CLOSE 180
+Servo Servomotor;
+void servo_init();
+
+//---------------------------
+// DISTANCE SENSOR INIT
+//---------------------------
+#define DISTANCE_SENSOR_PIN_DOG 12
+#define DISTANCE_SENSOR_PIN_BALL 10
+
+//---------------------------
+// BUTTON INIT
+//---------------------------
+#define PIN_BUTTON 8
+
+//---------------------------
+// RGB INIT
+//---------------------------
+#define PIN_LED_GREEN 7
+#define PIN_LED_BLUE 6
+#define PIN_LED_RED 5
 
 // ------------------------------------------------
 // states del embebido
@@ -252,6 +280,15 @@ void fsm()
     // Ya se atendió el event
     event.type = EVENT_CONTINUE;
     event.value = VALUE_CONTINUE;
+}
+//---------------------------
+// Servo Implementacion
+//---------------------------
+
+void servo_init()
+{
+  Servomotor.attach(SERVO_PIN);
+  Servomotor.write(SERVO_CLOSE);
 }
 
 // ------------------------------------------------
