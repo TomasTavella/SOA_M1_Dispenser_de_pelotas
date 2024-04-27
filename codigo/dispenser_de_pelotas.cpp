@@ -158,7 +158,7 @@ void fsm()
 
         case EVENT_EMPTY:
             //Activar actuadores
-            //LED ROJO
+            //cambiarled(ROJO);
             log("STATE_CHECKING", "EVENT_EMPTY");
             //actual_state = STATE_EMPTY;       //este no iría si lo hacemos sin estado EMPTY
             actual_state = STATE_CHECKING; //este iría si lo hacemos sin estado EMPTY
@@ -197,6 +197,8 @@ void fsm()
         case EVENT_DOG_NEARBY:
             //Activar actuadores
             //LED AMARILLO
+            //iniciaTemp();
+            //cambiarled();
             log("STATE_READY", "EVENT_DOG_NEARBY");
             actual_state = STATE_DOG_DETECTED;
             break;
@@ -290,13 +292,43 @@ void fsm()
     event.type = EVENT_CONTINUE;
     event.value = VALUE_CONTINUE;
 }
+
+
+
+// ------------------------------------------------
+// Actuadores
+// ------------------------------------------------
+void actualizar_led_carga(int color)
+{
+    actuador_led_rgb.color = color;
+    switch (actuador_led_rgb.color)
+    {
+    case COLOR_LED_VERDE:
+        digitalWrite(actuador_led_rgb.pin_rojo, LOW);
+        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
+        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+        break;
+    case COLOR_LED_AMARILLO:
+        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
+        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
+        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+        break;
+    case COLOR_LED_ROJO:
+        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
+        digitalWrite(actuador_led_rgb.pin_verde, LOW);
+        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+        break;
+    }
+}
+
+
 // ------------------------------------------------
 // Captura de eventos
 // ------------------------------------------------
 void catch_event()
 {
     if (verify_distance_dog() == true || verify_distance_ball() == true ||
-      verify_button() == true)
+      verify_button() == true )
     return;
 
     event.type = EVENT_CONTINUE;
@@ -309,24 +341,39 @@ bool verify_distance_dog()
 {
     int distance = distance_read(DISTANCE_SENSOR_PIN_DOG);
 
-    if(distance < UMBRAL_DISTANCE_DOG)  
-        return true;
-    else
-        return false;
+    if(actual_state == STATE_READY)
+    {
+        if(distance < UMBRAL_DISTANCE_DOG)  
+            {
+                event.type = EVENT_DOG_NEARBY;
+                return true;
+            }
+        else
+            return false;
+    }
+    return false;
 }
+
+
 bool verify_distance_ball() 
 {
     int distance = distance_read(DISTANCE_SENSOR_PIN_BALL);
-
-    if(distance < UMBRAL_DISTANCE_BALL)  
+    
+    //podriamos manejarlo con maquina de estados
+    if(distance < UMBRAL_DISTANCE_BALL)
+    { 
+        event.type = EVENT_NOT_EMPTY;
         return true;
+    }
     else
-        return false;
+    {
+        event.type = EVENT_EMPTY;
+        return true;
+    }
 }
 bool verify_button() 
 {
     int button_value = digitalRead(PIN_BUTTON);
-    
     return false;
 }
 long distance_read(int distance_pin) 
@@ -363,7 +410,7 @@ void distance_sensor_dog_init()
 void distance_sensor_ball_init()
 {
 
-}   
+}
 
 void rgb_init()
 {
