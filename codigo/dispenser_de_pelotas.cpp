@@ -5,7 +5,6 @@
 // ------------------------------------------------
 #define LOG // Comentar esta linea para desactivar logs
 
-
 // ------------------------------------------------
 // Constantes
 // ------------------------------------------------
@@ -24,7 +23,12 @@ Servo Servomotor;
 //---------------------------
 #define DISTANCE_SENSOR_PIN_DOG 12
 #define DISTANCE_SENSOR_PIN_BALL 10
-
+#define DELAY_PULSE_2 2
+#define DELAY_PULSE_10 10
+#define SPEED_OF_SOUND_CM_PER_MICROSECOND = 0.034 / 2
+#define UMBRAL_DISTANCE_DOG = 300
+#define UMBRAL_DISTANCE_BALL = 40
+long distance_read(int distance_pin);
 //---------------------------
 // BUTTON INIT
 //---------------------------
@@ -64,7 +68,6 @@ enum event_e
     EVENT_DOG_AWAY,     //agrego evento para detectar cuando se aleja el perro (para que no siga tirando pelotas)
     EVENT_CONTINUE
 };
-
 
 // ------------------------------------------------
 // Estructura de event
@@ -110,13 +113,6 @@ void log(int val)
 #endif
 }
 // ------------------------------------------------
-// Captura de eventos
-// ------------------------------------------------
-void catch_event()
-{
-
-}
-// ------------------------------------------------
 // FUNCTIONS INIT
 // ------------------------------------------------
 servo_init()
@@ -125,6 +121,12 @@ distance_sensor_ball_init();
 rgb_init();
 button_init();
 
+// ------------------------------------------------
+// Verificar sensores
+// ------------------------------------------------
+verify_distance_ball() 
+verify_distance_dog()
+verify_button()  
 // ------------------------------------------------
 // Inicialización
 // ------------------------------------------------
@@ -136,15 +138,12 @@ void start()
     rgb_init();
     button_init();
 }
-
 // ------------------------------------------------
 // Implementación maquina de estados
 // ------------------------------------------------
 void fsm()
 {
-
     catch_event();
-
     switch (actual_state)
     {
     case STATE_CHECKING:
@@ -291,6 +290,62 @@ void fsm()
     // Ya se atendió el event
     event.type = EVENT_CONTINUE;
     event.value = VALUE_CONTINUE;
+}
+// ------------------------------------------------
+// Captura de eventos
+// ------------------------------------------------
+void catch_event()
+{
+    if (verify_distance_dog() == true || verify_distance_ball() == true ||
+      verify_button() == true)
+    return;
+
+    event.type = EVENT_CONTINUE;
+    event.value = VALUE_CONTINUE;
+}
+// ------------------------------------------------
+// Verificar sensores
+// ------------------------------------------------
+bool verify_distance_dog() 
+{
+  int distance = distance_read(DISTANCE_SENSOR_PIN_DOG);
+
+  if(distance < UMBRAL_DISTANCE_DOG)  
+    return true;
+  else
+    return false;
+}
+bool verify_distance_ball() 
+{
+  int distance = distance_read(DISTANCE_SENSOR_PIN_BALL);
+
+  if(distance < UMBRAL_DISTANCE_BALL)  
+    return true;
+  else
+    return false;
+}
+bool verify_button() 
+{
+  int button_value = digitalRead(PIN_BUTTON);
+  
+  return false;
+}
+long distance_read(int distance_pin) 
+{
+  long time_pulse;   
+  pinMode(distance_pin, OUTPUT);
+
+  digitalWrite(distance_pin, LOW);
+  delayMicroseconds(DELAY_PULSE_2);
+
+  digitalWrite(distance_pin, HIGH);
+  delayMicroseconds(DELAY_PULSE_10);
+
+  digitalWrite(distance_pin, LOW);
+  pinMode(distance_pin, INPUT);
+  
+  time_pulse = pulseIn(distance_pin, HIGH)
+  return time_pulse * SPEED_OF_SOUND_CM_PER_MICROSECOND;
 }
 //---------------------------
 // Servo Implementacion
