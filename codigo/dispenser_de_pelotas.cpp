@@ -1,4 +1,4 @@
-#include <Servo.h>
+//#include <Servo.h>
 
 // ------------------------------------------------
 // Etiquetas
@@ -25,9 +25,9 @@ Servo Servomotor;
 #define DISTANCE_SENSOR_PIN_BALL 10
 #define DELAY_PULSE_2 2
 #define DELAY_PULSE_10 10
-#define SPEED_OF_SOUND_CM_PER_MICROSECOND = 0.034 / 2
-#define UMBRAL_DISTANCE_DOG = 300
-#define UMBRAL_DISTANCE_BALL = 40
+#define SPEED_OF_SOUND_CM_PER_MICROSECOND 0.034 / 2
+#define UMBRAL_DISTANCE_DOG 300
+#define UMBRAL_DISTANCE_BALL 40
 long distance_read(int distance_pin);
 //---------------------------
 // BUTTON INIT
@@ -115,24 +115,24 @@ void log(int val)
 // ------------------------------------------------
 // FUNCTIONS INIT
 // ------------------------------------------------
-servo_init()
-distance_sensor_dog_init();
-distance_sensor_ball_init();
-rgb_init();
-button_init();
+void servo_init();
+void distance_sensor_dog_init();
+void distance_sensor_ball_init();
+void rgb_init();
+void button_init();
 
 // ------------------------------------------------
 // Verificar sensores
 // ------------------------------------------------
-verify_distance_ball() 
-verify_distance_dog()
-verify_button()  
+bool verify_distance_ball();
+bool verify_distance_dog();
+bool verify_button();  
 // ------------------------------------------------
 // Inicialización
 // ------------------------------------------------
 void start()
 {
-    servo_init()
+    servo_init();
     distance_sensor_dog_init();
     distance_sensor_ball_init();
     rgb_init();
@@ -153,20 +153,20 @@ void fsm()
             //Activar actuadores
             //LED VERDE
             log("STATE_CHECKING", "EVENT_NOT_EMPTY");
-            state_actual = STATE_READY;
+            actual_state = STATE_READY;
             break;
 
         case EVENT_EMPTY:
             //Activar actuadores
             //LED ROJO
             log("STATE_CHECKING", "EVENT_EMPTY");
-            //state_actual = STATE_EMPTY;       //este no iría si lo hacemos sin estado EMPTY
-            state_actual = STATE_CHECKING; //este iría si lo hacemos sin estado EMPTY
+            //actual_state = STATE_EMPTY;       //este no iría si lo hacemos sin estado EMPTY
+            actual_state = STATE_CHECKING; //este iría si lo hacemos sin estado EMPTY
             break;
 
         case EVENT_CONTINUE:
             log("STATE_CHECKING", "EVENT_CONTINUE");
-            state_actual = STATE_CHECKING;
+            actual_state = STATE_CHECKING;
             break;
 
         default:
@@ -182,11 +182,11 @@ void fsm()
         //         //Activar actuadores
         //         //LED VERDE
         //         log("STATE_EMPTY", "EVENT_NOT_EMPTY");
-        //         state_actual = STATE_READY;
+        //         actual_state = STATE_READY;
         //         break;
         //     case EVENT_CONTINUE:
         //         log("STATE_EMPTY", "EVENT_CONTINUE");
-        //         state_actual = STATE_EMPTY;
+        //         actual_state = STATE_EMPTY;
         //         break;
         //     }
         //     break;
@@ -198,7 +198,7 @@ void fsm()
             //Activar actuadores
             //LED AMARILLO
             log("STATE_READY", "EVENT_DOG_NEARBY");
-            state_actual = STATE_DOG_DETECTED;
+            actual_state = STATE_DOG_DETECTED;
             break;
 
         case EVENT_BUTTON:
@@ -206,12 +206,12 @@ void fsm()
             //LED AMARILLO
             //SERVIR PELOTA
             log("STATE_READY", "EVENT_BUTTON");
-            state_actual = STATE_DROP_BALL;
+            actual_state = STATE_DROP_BALL;
             break;
 
         case EVENT_CONTINUE:
             log("STATE_READY", "EVENT_CONTINUE");
-            state_actual = STATE_READY;
+            actual_state = STATE_READY;
             break;
 
         default:
@@ -226,19 +226,19 @@ void fsm()
             //Activar actuadores
             //SERVIR PELOTA
             log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
-            state_actual = STATE_DROP_BALL;
+            actual_state = STATE_DROP_BALL;
             break;
 
         case EVENT_BUTTON:
             //Activar actuadores
             //SERVIR PELOTA
             log("STATE_DOG_DETECTED", "EVENT_BUTTON");
-            state_actual = STATE_DROP_BALL;
+            actual_state = STATE_DROP_BALL;
             break;
 
         case EVENT_CONTINUE:
             log("STATE_DOG_DETECTED", "EVENT_CONTINUE");
-            state_actual = STATE_DOG_DETECTED;
+            actual_state = STATE_DOG_DETECTED;
             break;
 
         default:
@@ -253,12 +253,12 @@ void fsm()
             //CERRAR SERVO
             //APAGAR LED
             log("STATE_DROP_BALL", "EVENT_TIMEOUT_CLOSE_SERVO");
-            state_actual = STATE_END_OF_SERVICE;
+            actual_state = STATE_END_OF_SERVICE;
             break;
 
         case EVENT_CONTINUE:
             log("STATE_DROP_BALL", "EVENT_CONTINUE");
-            state_actual = STATE_DROP_BALL;
+            actual_state = STATE_DROP_BALL;
             break;
 
         default:
@@ -269,15 +269,14 @@ void fsm()
         switch (event.type)
         {
         case EVENT_DOG_AWAY:
-            //Activar actuadores
 
             log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
-            state_actual = STATE_CHECKING;
+            actual_state = STATE_CHECKING;
             break;
 
         case EVENT_CONTINUE:
             log("STATE_END_OF_SERVICE", "EVENT_CONTINUE");
-            state_actual = STATE_END_OF_SERVICE;
+            actual_state = STATE_END_OF_SERVICE;
             break;
             
         default:
@@ -308,52 +307,52 @@ void catch_event()
 // ------------------------------------------------
 bool verify_distance_dog() 
 {
-  int distance = distance_read(DISTANCE_SENSOR_PIN_DOG);
+    int distance = distance_read(DISTANCE_SENSOR_PIN_DOG);
 
-  if(distance < UMBRAL_DISTANCE_DOG)  
-    return true;
-  else
-    return false;
+    if(distance < UMBRAL_DISTANCE_DOG)  
+        return true;
+    else
+        return false;
 }
 bool verify_distance_ball() 
 {
-  int distance = distance_read(DISTANCE_SENSOR_PIN_BALL);
+    int distance = distance_read(DISTANCE_SENSOR_PIN_BALL);
 
-  if(distance < UMBRAL_DISTANCE_BALL)  
-    return true;
-  else
-    return false;
+    if(distance < UMBRAL_DISTANCE_BALL)  
+        return true;
+    else
+        return false;
 }
 bool verify_button() 
 {
-  int button_value = digitalRead(PIN_BUTTON);
-  
-  return false;
+    int button_value = digitalRead(PIN_BUTTON);
+    
+    return false;
 }
 long distance_read(int distance_pin) 
 {
-  long time_pulse;   
-  pinMode(distance_pin, OUTPUT);
+    long time_pulse;   
+    pinMode(distance_pin, OUTPUT);
 
-  digitalWrite(distance_pin, LOW);
-  delayMicroseconds(DELAY_PULSE_2);
+    digitalWrite(distance_pin, LOW);
+    delayMicroseconds(DELAY_PULSE_2);
 
-  digitalWrite(distance_pin, HIGH);
-  delayMicroseconds(DELAY_PULSE_10);
+    digitalWrite(distance_pin, HIGH);
+    delayMicroseconds(DELAY_PULSE_10);
 
-  digitalWrite(distance_pin, LOW);
-  pinMode(distance_pin, INPUT);
-  
-  time_pulse = pulseIn(distance_pin, HIGH)
-  return time_pulse * SPEED_OF_SOUND_CM_PER_MICROSECOND;
+    digitalWrite(distance_pin, LOW);
+    pinMode(distance_pin, INPUT);
+    
+    time_pulse = pulseIn(distance_pin, HIGH);
+    return time_pulse * SPEED_OF_SOUND_CM_PER_MICROSECOND;
 }
 //---------------------------
 // Servo Implementacion
 //---------------------------
 void servo_init()
 {
-  Servomotor.attach(SERVO_PIN);
-  Servomotor.write(SERVO_CLOSE);
+    Servomotor.attach(SERVO_PIN);
+    Servomotor.write(SERVO_CLOSE);
 }
 
 void distance_sensor_dog_init()
@@ -368,15 +367,15 @@ void distance_sensor_ball_init()
 
 void rgb_init()
 {
-  pinMode(PIN_LED_RED, OUTPUT);
-  pinMode(PIN_LED_GREEN, OUTPUT);
-  pinMode(PIN_LED_BLUE, OUTPUT);
-  // En que color se inicia?
+    pinMode(PIN_LED_RED, OUTPUT);
+    pinMode(PIN_LED_GREEN, OUTPUT);
+    pinMode(PIN_LED_BLUE, OUTPUT);
+    // En que color se inicia?
 }
 
 void button_init()
 {
-    pinMode(PIN_BUTTON, INPUT); 
+    
 }
 // ------------------------------------------------
 // Arduino setup
