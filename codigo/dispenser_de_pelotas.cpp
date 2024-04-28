@@ -22,19 +22,21 @@
 // SERVO INIT
 //---------------------------
 #define SERVO_PIN 9
-#define SERVO_OPEN 0
-#define SERVO_CLOSE 180
+#define SERVO_OPEN 180
+#define SERVO_CLOSE 90
 Servo Servomotor;
 
 //---------------------------
 // DISTANCE SENSOR INIT
 //---------------------------
-#define DISTANCE_SENSOR_PIN_DOG 12
-#define DISTANCE_SENSOR_PIN_BALL 10
+#define DISTANCE_SENSOR_PINECHO_DOG 12
+#define DISTANCE_SENSOR_PINTRIG_DOG 13
+#define DISTANCE_SENSOR_PINECHO_BALL 10
+#define DISTANCE_SENSOR_PINTRIG_BALL 11
 #define DELAY_PULSE_2 2
 #define DELAY_PULSE_10 10
-#define SPEED_OF_SOUND_CM_PER_MICROSECOND 0.034 / 2
-#define UMBRAL_DISTANCE_DOG 100
+#define SPEED_OF_SOUND_CM_PER_MICROSECOND 0.01723
+#define UMBRAL_DISTANCE_DOG 200
 #define UMBRAL_DISTANCE_BALL 40
 long distance_read(int distance_pin);
 //---------------------------
@@ -117,26 +119,26 @@ bool check_time_servo;
 // ------------------------------------------------
 void log(const char *state, const char *event)
 {
-#ifdef LOG
+
     Serial.println("------------------------------------------------");
     Serial.println(state);
     Serial.println(event);
     Serial.println("------------------------------------------------");
-#endif
+
 }
 
 void log(const char *msg)
 {
-#ifdef LOG
+
     Serial.println(msg);
-#endif
+
 }
 
 void log(int val)
 {
-#ifdef LOG
+
     Serial.println(val);
-#endif
+
 }
 // ------------------------------------------------
 // FUNCTIONS INIT
@@ -144,6 +146,8 @@ void log(int val)
 void servo_init();
 void rgb_init();
 void button_init();
+void distance_dog_init();
+void distance_ball_init();
 
 // ------------------------------------------------
 // Verificar sensores
@@ -156,12 +160,13 @@ bool verify_button();
 // ------------------------------------------------
 void start()
 {
-    servo_init();
+    Serial.begin(9600);
+  	servo_init();
     rgb_init();
     button_init();
-    actual_state = STATE_CHECKING;
-    previous_time = millis();
-    time_servo_since = millis();
+    distance_dog_init();
+    distance_ball_init();
+  	actual_state = STATE_CHECKING;	
 }
 // ------------------------------------------------
 // Implementación maquina de estados
@@ -225,7 +230,7 @@ void fsm()
             //Activar actuadores
             //LED AMARILLO
             update_led(YELLOW);
-            //iniciaTemp();
+            iniciar_temp();
             //cambiarled();
             log("STATE_READY", "EVENT_DOG_NEARBY");
             actual_state = STATE_DOG_DETECTED;
@@ -368,7 +373,7 @@ void update_led(int color)
 
 void catch_event()
 {
-	bool check_time_waitDog = false;
+
     //verifico evento timeout de espera para tirar pelota
     if (check_time_waitDog)
     {
@@ -407,8 +412,6 @@ void catch_event()
         event.type = EVENT_CONTINUE;
         event.value = VALUE_CONTINUE;
     }
-    
-
 
 }
 // ------------------------------------------------
@@ -416,7 +419,7 @@ void catch_event()
 // ------------------------------------------------
 bool verify_distance_dog() 
 {
-    int distance = distance_read(DISTANCE_SENSOR_PIN_DOG);
+    int distance = distance_read(DISTANCE_SENSOR_PINTRIG_DOG, DISTANCE_SENSOR_PINECHO_DOG);
 
     if(actual_state == STATE_READY)
     {
@@ -428,24 +431,37 @@ bool verify_distance_dog()
         else
             return false;
     }
+  
+  	if(actual_state == STATE_END_OF_SERVICE)
+    {
+        if(distance >= UMBRAL_DISTANCE_DOG)  
+            {
+                event.type = EVENT_DOG_AWAY;
+                return true;
+            }
+        else
+            return false;
+    }
     return false;
 }
 
 
 bool verify_distance_ball() 
 {
-    int distance = distance_read(DISTANCE_SENSOR_PIN_BALL);
+    int distance = distance_read(DISTANCE_SENSOR_PINTRIG_BALL, DISTANCE_SENSOR_PINECHO_BALL );
     
     //podriamos manejarlo con maquina de estados
     if(actual_state == STATE_CHECKING)
     {
         if(distance < UMBRAL_DISTANCE_BALL)
         { 
-            event.type = EVENT_NOT_EMPTY;
+            log(distance);
+          	event.type = EVENT_NOT_EMPTY;
             return true;
         }
         else
         {
+          	log(distance);
             event.type = EVENT_EMPTY;
             return true;
         }
@@ -466,30 +482,46 @@ bool verify_button()
     }
     return false;
 }
-long distance_read(int distance_pin) 
+
+long distance_read(int distance_pintrig, int distance_pinecho) 
 {
-    long time_pulse;   
-    pinMode(distance_pin, OUTPUT);
+  digitalWrite(distance_pintrig, LOW);
+  delayMicroseconds(DELAY_PULSE_2);
 
-    digitalWrite(distance_pin, LOW);
-    delayMicroseconds(DELAY_PULSE_2);
+  digitalWrite(distance_pintrig, HIGH);
+  delayMicroseconds(DELAY_PULSE_10);
+  
+  digitalWrite(distance_pintrig, LOW);
+  pinMode(distance_pinecho, INPUT);
 
-    digitalWrite(distance_pin, HIGH);
-    delayMicroseconds(DELAY_PULSE_10);
-
-    digitalWrite(distance_pin, LOW);
-    pinMode(distance_pin, INPUT);
-    
-    time_pulse = pulseIn(distance_pin, HIGH);
-    return time_pulse * SPEED_OF_SOUND_CM_PER_MICROSECOND;
+  return (pulseIn(distance_pinecho, HIGH))* SPEED_OF_SOUND_CM_PER_MICROSECOND; 
 }
 //---------------------------
 // Servo Implementacion
 //---------------------------
+
+void iniciar_temp()
+{
+  	previous_time = millis();
+	time_servo_since = millis();
+  	time_waitDog_since = millis();
+}
+
 void servo_init()
 {
     Servomotor.attach(SERVO_PIN);
     Servomotor.write(SERVO_CLOSE);
+}
+
+void distance_ball_init()
+{
+  	pinMode(DISTANCE_SENSOR_PINECHO_DOG, INPUT);
+  	pinMode(DISTANCE_SENSOR_PINTRIG_DOG, OUTPUT);
+}
+void distance_dog_init()
+{
+  	pinMode(DISTANCE_SENSOR_PINECHO_BALL, INPUT);
+  	pinMode(DISTANCE_SENSOR_PINTRIG_BALL, OUTPUT);
 }
 
 void drop_ball()
