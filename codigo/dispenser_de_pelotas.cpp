@@ -318,26 +318,34 @@ void fsm()
 // ------------------------------------------------
 // Actuadores
 // ------------------------------------------------
-void actualizar_led_carga(int color)
+void update_led(int color)
 {
-    actuador_led_rgb.color = color;
-    switch (actuador_led_rgb.color)
+    
+    switch (color)
     {
     case COLOR_LED_VERDE:
-        digitalWrite(actuador_led_rgb.pin_rojo, LOW);
-        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+        digitalWrite(COLOR_LED_ROJO, LOW);
+        digitalWrite(COLOR_LED_VERDE, HIGH);
+        digitalWrite(COLOR_LED_BLUE, LOW);
         break;
-    case COLOR_LED_AMARILLO:
-        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
-        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case COLOR_LED_BLUE:
+        digitalWrite(COLOR_LED_ROJO, HIGH);
+        digitalWrite(COLOR_LED_VERDE, HIGH);
+        digitalWrite(COLOR_LED_BLUE, HIGH);
         break;
     case COLOR_LED_ROJO:
-        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
-        digitalWrite(actuador_led_rgb.pin_verde, LOW);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+        digitalWrite(COLOR_LED_ROJO, HIGH);
+        digitalWrite(COLOR_LED_VERDE, LOW);
+        digitalWrite(COLOR_LED_BLUE, LOW);
         break;
+    case COLOR_LED_NONE:
+        digitalWrite(COLOR_LED_ROJO, LOW);
+        digitalWrite(COLOR_LED_VERDE, LOW);
+        digitalWrite(COLOR_LED_BLUE, LOW);
+        break;
+
+
+        
     }
 }
 
