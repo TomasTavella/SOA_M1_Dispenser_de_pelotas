@@ -1,4 +1,4 @@
-//#include <Servo.h>
+#include <Servo.h>
 
 // ------------------------------------------------
 // Etiquetas
@@ -49,6 +49,12 @@ long distance_read(int distance_pin);
 #define PIN_LED_GREEN 7
 #define PIN_LED_BLUE 6
 #define PIN_LED_RED 5
+
+#define NONE 0
+#define GREEN 1
+#define RED 2
+#define YELLOW 3
+
 
 // ------------------------------------------------
 // states del embebido
@@ -168,6 +174,7 @@ void fsm()
         case EVENT_NOT_EMPTY:
             //Activar actuadores
             //LED VERDE
+            update_led(GREEN);
             log("STATE_CHECKING", "EVENT_NOT_EMPTY");
             actual_state = STATE_READY;
             break;
@@ -175,6 +182,7 @@ void fsm()
         case EVENT_EMPTY:
             //Activar actuadores
             //cambiarled(ROJO);
+            update_led(RED);
             log("STATE_CHECKING", "EVENT_EMPTY");
             //actual_state = STATE_EMPTY;       //este no iría si lo hacemos sin estado EMPTY
             actual_state = STATE_CHECKING; //este iría si lo hacemos sin estado EMPTY
@@ -213,6 +221,7 @@ void fsm()
         case EVENT_DOG_NEARBY:
             //Activar actuadores
             //LED AMARILLO
+            update_led(YELLOW);
             //iniciaTemp();
             //cambiarled();
             log("STATE_READY", "EVENT_DOG_NEARBY");
@@ -223,6 +232,8 @@ void fsm()
             //Activar actuadores
             //LED AMARILLO
             //SERVIR PELOTA
+            update_led(YELLOW);
+            drop_ball();
             log("STATE_READY", "EVENT_BUTTON");
             actual_state = STATE_DROP_BALL;
             break;
@@ -243,6 +254,7 @@ void fsm()
         case EVENT_TIMEOUT_WAIT:
             //Activar actuadores
             //SERVIR PELOTA
+            drop_ball();
             log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
             actual_state = STATE_DROP_BALL;
             break;
@@ -250,6 +262,7 @@ void fsm()
         case EVENT_BUTTON:
             //Activar actuadores
             //SERVIR PELOTA
+            drop_ball();
             log("STATE_DOG_DETECTED", "EVENT_BUTTON");
             actual_state = STATE_DROP_BALL;
             break;
@@ -270,6 +283,8 @@ void fsm()
             //Activar actuadores
             //CERRAR SERVO
             //APAGAR LED
+            close_servo();
+            update_led(NONE);
             log("STATE_DROP_BALL", "EVENT_TIMEOUT_CLOSE_SERVO");
             actual_state = STATE_END_OF_SERVICE;
             break;
@@ -314,26 +329,32 @@ void fsm()
 // ------------------------------------------------
 // Actuadores
 // ------------------------------------------------
-void actualizar_led_carga(int color)
+void update_led(int color)
 {
-    actuador_led_rgb.color = color;
-    switch (actuador_led_rgb.color)
+    
+    switch (color)
     {
-    case COLOR_LED_VERDE:
-        digitalWrite(actuador_led_rgb.pin_rojo, LOW);
-        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case GREEN:
+        digitalWrite(PIN_LED_RED, LOW);
+        digitalWrite(PIN_LED_GREEN, HIGH);
+        digitalWrite(PIN_LED_BLUE, LOW);
         break;
-    case COLOR_LED_AMARILLO:
-        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
-        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case YELLOW:
+        digitalWrite(PIN_LED_RED, HIGH);
+        digitalWrite(PIN_LED_GREEN, HIGH);
+        digitalWrite(PIN_LED_BLUE, LOW);
         break;
-    case COLOR_LED_ROJO:
-        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
-        digitalWrite(actuador_led_rgb.pin_verde, LOW);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case RED:
+        digitalWrite(PIN_LED_RED, HIGH);
+        digitalWrite(PIN_LED_GREEN, LOW);
+        digitalWrite(PIN_LED_BLUE, LOW);
         break;
+    case NONE:
+        digitalWrite(PIN_LED_RED, LOW);
+        digitalWrite(PIN_LED_GREEN, LOW);
+        digitalWrite(PIN_LED_BLUE, LOW);
+        break;
+        
     }
 }
 
@@ -466,6 +487,18 @@ void servo_init()
 {
     Servomotor.attach(SERVO_PIN);
     Servomotor.write(SERVO_CLOSE);
+}
+
+void drop_ball()
+{
+    Servomotor.write(SERVO_OPEN);
+    check_time_servo = true;
+}
+
+void close_servo()
+{
+    Servomotor.write(SERVO_CLOSE);
+    check_time_servo = false;
 }
 
 
