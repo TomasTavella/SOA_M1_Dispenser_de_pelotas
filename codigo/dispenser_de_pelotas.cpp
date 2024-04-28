@@ -10,6 +10,14 @@
 // ------------------------------------------------
 #define VALUE_CONTINUE -1
 
+
+// ------------------------------------------------
+// Temporizadores
+// ------------------------------------------------
+#define TIME_EVENT_MILIS 2000
+#define TIME_WAIT_MILIS 1000
+#define TIME_SERVO_MILIS 500
+
 //---------------------------
 // SERVO INIT
 //---------------------------
@@ -33,6 +41,7 @@ long distance_read(int distance_pin);
 // BUTTON INIT
 //---------------------------
 #define PIN_BUTTON 8
+#define BUTTON_PRESS 1
 
 //---------------------------
 // RGB INIT
@@ -84,6 +93,17 @@ typedef struct event_s
 // ------------------------------------------------
 state_e actual_state;
 event_t event;
+
+unsigned long previous_time;
+unsigned long current_time;
+
+unsigned long time_waitDog_since;
+unsigned long time_waitDog_until;
+bool check_time_waitDog;
+
+unsigned long time_servo_since;
+unsigned long time_servo_until;
+bool check_time_servo;
 
 
 // ------------------------------------------------
@@ -325,14 +345,51 @@ void actualizar_led_carga(int color)
 // ------------------------------------------------
 // Captura de eventos
 // ------------------------------------------------
+
 void catch_event()
 {
-    if (verify_distance_dog() == true || verify_distance_ball() == true ||
-      verify_button() == true )
-    return;
 
-    event.type = EVENT_CONTINUE;
-    event.value = VALUE_CONTINUE;
+    //verifico evento timeout de espera para tirar pelota
+    if (check_time_waitDog)
+    {
+        time_waitDog_until = millis();
+        if ((time_waitDog_until - time_waitDog_since) > TIME_WAIT_MILIS)
+        {
+            event.type = EVENT_TIMEOUT_WAIT;
+            time_waitDog_since = time_waitDog_until;
+            return;
+        }
+    }
+
+    //verifico evento timeout de espera para cerrar puerta (servo)
+    if (check_time_servo)
+    {
+        time_servo_until = millis();
+        if ((time_servo_until - time_servo_since) > TIME_SERVO_MILIS)
+        {
+            event.type = EVENT_TIMEOUT_CLOSE_SERVO;
+            time_servo_since = time_servo_until;
+            return;
+        }
+    }
+
+    //verifico sensores
+    current_time = millis();
+    if ((current_time - previous_time) > TIME_EVENT_MILIS)
+    {
+        if (verify_distance_dog() == true || verify_distance_ball() == true ||
+            verify_button() == true )
+            return;
+        previous_time = current_time;
+    }
+    else
+    {
+        event.type = EVENT_CONTINUE;
+        event.value = VALUE_CONTINUE;
+    }
+    
+
+
 }
 // ------------------------------------------------
 // Verificar sensores
@@ -360,20 +417,33 @@ bool verify_distance_ball()
     int distance = distance_read(DISTANCE_SENSOR_PIN_BALL);
     
     //podriamos manejarlo con maquina de estados
-    if(distance < UMBRAL_DISTANCE_BALL)
-    { 
-        event.type = EVENT_NOT_EMPTY;
-        return true;
-    }
-    else
+    if(actual_state == STATE_CHECKING)
     {
-        event.type = EVENT_EMPTY;
-        return true;
+        if(distance < UMBRAL_DISTANCE_BALL)
+        { 
+            event.type = EVENT_NOT_EMPTY;
+            return true;
+        }
+        else
+        {
+            event.type = EVENT_EMPTY;
+            return true;
+        }
     }
+    return false;
 }
 bool verify_button() 
 {
     int button_value = digitalRead(PIN_BUTTON);
+    if(actual_state == STATE_READY || actual_state == STATE_DOG_DETECTED)
+    {
+        if(button_value == BUTTON_PRESS)
+        {
+            event.type = EVENT_BUTTON;
+            return true;
+        }
+        return false;
+    }
     return false;
 }
 long distance_read(int distance_pin) 
