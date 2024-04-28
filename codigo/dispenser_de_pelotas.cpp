@@ -1,4 +1,4 @@
-//#include <Servo.h>
+#include <Servo.h>
 
 // ------------------------------------------------
 // Etiquetas
@@ -226,7 +226,7 @@ void fsm()
         case EVENT_BUTTON:
             //Activar actuadores
             //LED AMARILLO
-            //SERVIR PELOTA
+            drop_ball()
             log("STATE_READY", "EVENT_BUTTON");
             actual_state = STATE_DROP_BALL;
             break;
@@ -246,14 +246,14 @@ void fsm()
         {
         case EVENT_TIMEOUT_WAIT:
             //Activar actuadores
-            //SERVIR PELOTA
+            drop_ball()
             log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
             actual_state = STATE_DROP_BALL;
             break;
 
         case EVENT_BUTTON:
             //Activar actuadores
-            //SERVIR PELOTA
+            drop_ball();
             log("STATE_DOG_DETECTED", "EVENT_BUTTON");
             actual_state = STATE_DROP_BALL;
             break;
@@ -318,25 +318,25 @@ void fsm()
 // ------------------------------------------------
 // Actuadores
 // ------------------------------------------------
-void actualizar_led_carga(int color)
+void update_led(int color)
 {
-    actuador_led_rgb.color = color;
-    switch (actuador_led_rgb.color)
+    
+    switch (color)
     {
-    case COLOR_LED_VERDE:
-        digitalWrite(actuador_led_rgb.pin_rojo, LOW);
-        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case COLOR_LED_GREEN:
+        digitalWrite(COLOR_LED_RED, LOW);
+        digitalWrite(COLOR_LED_GREEN, HIGH);
+        digitalWrite(COLOR_LED_BLUE, LOW);
         break;
-    case COLOR_LED_AMARILLO:
-        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
-        digitalWrite(actuador_led_rgb.pin_verde, HIGH);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case COLOR_LED_BLUE:
+        digitalWrite(COLOR_LED_RED, LOW);
+        digitalWrite(COLOR_LED_GREEN, LOW);
+        digitalWrite(COLOR_LED_BLUE, HIGH;
         break;
-    case COLOR_LED_ROJO:
-        digitalWrite(actuador_led_rgb.pin_rojo, HIGH);
-        digitalWrite(actuador_led_rgb.pin_verde, LOW);
-        digitalWrite(actuador_led_rgb.pin_azul, LOW);
+    case COLOR_LED_RED:
+        digitalWrite(COLOR_LED_RED, HIGH);
+        digitalWrite(COLOR_LED_GREEN, LOW);
+        digitalWrite(COLOR_LED_BLUE, LOW);
         break;
     }
 }
@@ -470,6 +470,16 @@ void servo_init()
 {
     Servomotor.attach(SERVO_PIN);
     Servomotor.write(SERVO_CLOSE);
+    
+}
+
+void drop_ball()
+{
+    Servomotor.write(SERVO_OPEN);
+    delayMicroseconds(DELAY_PULSE_10); // O iria el evento EVENT_TIMEOUT_CLOSE_SERVO ??
+    Servomotor.write(SERVO_CLOSE);
+    event.type = EVENT_TIMEOUT_CLOSE_SERVO;
+
 }
 
 void distance_sensor_dog_init()
