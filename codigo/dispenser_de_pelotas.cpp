@@ -136,8 +136,6 @@ void log(int val)
 // FUNCTIONS INIT
 // ------------------------------------------------
 void servo_init();
-void distance_sensor_dog_init();
-void distance_sensor_ball_init();
 void rgb_init();
 void button_init();
 
@@ -153,8 +151,6 @@ bool verify_button();
 void start()
 {
     servo_init();
-    distance_sensor_dog_init();
-    distance_sensor_ball_init();
     rgb_init();
     button_init();
 }
@@ -472,27 +468,21 @@ void servo_init()
     Servomotor.write(SERVO_CLOSE);
 }
 
-void distance_sensor_dog_init()
-{
-
-}
-
-void distance_sensor_ball_init()
-{
-
-}
 
 void rgb_init()
 {
     pinMode(PIN_LED_RED, OUTPUT);
     pinMode(PIN_LED_GREEN, OUTPUT);
     pinMode(PIN_LED_BLUE, OUTPUT);
-    // En que color se inicia?
+    
+    digitalWrite(PIN_LED_RED, LOW);
+    digitalWrite(PIN_LED_GREEN, LOW);
+    digitalWrite(PIN_LED_BLUE, LOW);
 }
 
 void button_init()
 {
-    
+    pinMode(PIN_BUTTON, INPUT);
 }
 // ------------------------------------------------
 // Arduino setup
