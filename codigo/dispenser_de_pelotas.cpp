@@ -34,7 +34,7 @@ Servo Servomotor;
 #define DELAY_PULSE_2 2
 #define DELAY_PULSE_10 10
 #define SPEED_OF_SOUND_CM_PER_MICROSECOND 0.034 / 2
-#define UMBRAL_DISTANCE_DOG 300
+#define UMBRAL_DISTANCE_DOG 100
 #define UMBRAL_DISTANCE_BALL 40
 long distance_read(int distance_pin);
 //---------------------------
@@ -159,6 +159,9 @@ void start()
     servo_init();
     rgb_init();
     button_init();
+    actual_state = STATE_CHECKING;
+    previous_time = millis();
+    time_servo_since = millis();
 }
 // ------------------------------------------------
 // Implementación maquina de estados
@@ -365,7 +368,7 @@ void update_led(int color)
 
 void catch_event()
 {
-
+	bool check_time_waitDog = false;
     //verifico evento timeout de espera para tirar pelota
     if (check_time_waitDog)
     {
