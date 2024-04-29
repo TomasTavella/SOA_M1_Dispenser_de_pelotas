@@ -14,9 +14,9 @@
 // ------------------------------------------------
 // Temporizadores
 // ------------------------------------------------
-#define TIME_EVENT_MILIS 2000
-#define TIME_WAIT_MILIS 1000
-#define TIME_SERVO_MILIS 500
+#define TIME_EVENT_MILIS 500
+#define TIME_WAIT_MILIS 3000
+#define TIME_SERVO_MILIS 700
 
 //---------------------------
 // SERVO INIT
@@ -43,7 +43,6 @@ long distance_read(int distance_pin);
 // BUTTON INIT
 //---------------------------
 #define PIN_BUTTON 8
-#define BUTTON_PRESS 1
 
 //---------------------------
 // RGB INIT
@@ -107,11 +106,11 @@ unsigned long current_time;
 
 unsigned long time_waitDog_since;
 unsigned long time_waitDog_until;
-bool check_time_waitDog;
+bool check_time_waitDog = false;
 
 unsigned long time_servo_since;
 unsigned long time_servo_until;
-bool check_time_servo;
+bool check_time_servo = false;
 
 
 // ------------------------------------------------
@@ -166,7 +165,8 @@ void start()
     button_init();
     distance_dog_init();
     distance_ball_init();
-  	actual_state = STATE_CHECKING;	
+  	actual_state = STATE_CHECKING;
+    previous_time = millis();
 }
 // ------------------------------------------------
 // Implementación maquina de estados
@@ -206,23 +206,6 @@ void fsm()
         }
         break;
 
-        //                      Este estado no iría en caso de manejar el evento EMPTY en el estado CHECKING
-        // case STATE_EMPTY:
-        //     switch (event.type)
-        //     {
-        //     case EVENT_NOT_EMPTY:
-        //         //Activar actuadores
-        //         //LED VERDE
-        //         log("STATE_EMPTY", "EVENT_NOT_EMPTY");
-        //         actual_state = STATE_READY;
-        //         break;
-        //     case EVENT_CONTINUE:
-        //         log("STATE_EMPTY", "EVENT_CONTINUE");
-        //         actual_state = STATE_EMPTY;
-        //         break;
-        //     }
-        //     break;
-
     case STATE_READY:
         switch (event.type)
         {
@@ -230,8 +213,8 @@ void fsm()
             //Activar actuadores
             //LED AMARILLO
             update_led(YELLOW);
-            iniciar_temp();
-            //cambiarled();
+            time_waitDog_since = millis();
+            check_time_waitDog = true;
             log("STATE_READY", "EVENT_DOG_NEARBY");
             actual_state = STATE_DOG_DETECTED;
             break;
@@ -283,6 +266,7 @@ void fsm()
         default:
             break;
         }
+        break;
 
     case STATE_DROP_BALL:
         switch (event.type)
@@ -305,6 +289,7 @@ void fsm()
         default:
             break;
         }
+        break;
 
     case STATE_END_OF_SERVICE:
         switch (event.type)
@@ -323,7 +308,6 @@ void fsm()
         default:
             break;
         }
-        
         break;
     }
 
@@ -382,6 +366,7 @@ void catch_event()
         {
             event.type = EVENT_TIMEOUT_WAIT;
             time_waitDog_since = time_waitDog_until;
+            check_time_waitDog = false;
             return;
         }
     }
@@ -394,16 +379,23 @@ void catch_event()
         {
             event.type = EVENT_TIMEOUT_CLOSE_SERVO;
             time_servo_since = time_servo_until;
+            check_time_servo = false;
             return;
         }
     }
 
-    //verifico sensores
+    if(verify_button() == true)
+    {
+        event.type = EVENT_BUTTON;
+        return;
+    }
+
+
+    //verifico sensores distancia
     current_time = millis();
     if ((current_time - previous_time) > TIME_EVENT_MILIS)
     {
-        if (verify_distance_dog() == true || verify_distance_ball() == true ||
-            verify_button() == true )
+        if (verify_distance_dog() == true || verify_distance_ball() == true )
             return;
         previous_time = current_time;
     }
@@ -419,10 +411,9 @@ void catch_event()
 // ------------------------------------------------
 bool verify_distance_dog() 
 {
-    int distance = distance_read(DISTANCE_SENSOR_PINTRIG_DOG, DISTANCE_SENSOR_PINECHO_DOG);
-
     if(actual_state == STATE_READY)
     {
+        int distance = distance_read(DISTANCE_SENSOR_PINTRIG_DOG, DISTANCE_SENSOR_PINECHO_DOG);
         if(distance < UMBRAL_DISTANCE_DOG)  
             {
                 event.type = EVENT_DOG_NEARBY;
@@ -434,6 +425,7 @@ bool verify_distance_dog()
   
   	if(actual_state == STATE_END_OF_SERVICE)
     {
+        int distance = distance_read(DISTANCE_SENSOR_PINTRIG_DOG, DISTANCE_SENSOR_PINECHO_DOG);
         if(distance >= UMBRAL_DISTANCE_DOG)  
             {
                 event.type = EVENT_DOG_AWAY;
@@ -448,11 +440,9 @@ bool verify_distance_dog()
 
 bool verify_distance_ball() 
 {
-    int distance = distance_read(DISTANCE_SENSOR_PINTRIG_BALL, DISTANCE_SENSOR_PINECHO_BALL );
-    
-    //podriamos manejarlo con maquina de estados
     if(actual_state == STATE_CHECKING)
     {
+        int distance = distance_read(DISTANCE_SENSOR_PINTRIG_BALL, DISTANCE_SENSOR_PINECHO_BALL );    
         if(distance < UMBRAL_DISTANCE_BALL)
         { 
             log(distance);
@@ -470,12 +460,11 @@ bool verify_distance_ball()
 }
 bool verify_button() 
 {
-    int button_value = digitalRead(PIN_BUTTON);
     if(actual_state == STATE_READY || actual_state == STATE_DOG_DETECTED)
     {
-        if(button_value == BUTTON_PRESS)
+        int button_value = digitalRead(PIN_BUTTON);
+        if(button_value == HIGH)
         {
-            event.type = EVENT_BUTTON;
             return true;
         }
         return false;
@@ -500,13 +489,6 @@ long distance_read(int distance_pintrig, int distance_pinecho)
 // Servo Implementacion
 //---------------------------
 
-void iniciar_temp()
-{
-  	previous_time = millis();
-	time_servo_since = millis();
-  	time_waitDog_since = millis();
-}
-
 void servo_init()
 {
     Servomotor.attach(SERVO_PIN);
@@ -527,13 +509,13 @@ void distance_dog_init()
 void drop_ball()
 {
     Servomotor.write(SERVO_OPEN);
+    time_servo_since = millis();
     check_time_servo = true;
 }
 
 void close_servo()
 {
     Servomotor.write(SERVO_CLOSE);
-    check_time_servo = false;
 }
 
 
