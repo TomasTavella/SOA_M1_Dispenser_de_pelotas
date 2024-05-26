@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include <SoftwareSerial.h>
 
 // ------------------------------------------------
 // Etiquetas
@@ -56,6 +57,15 @@ long distance_read(int distance_pin);
 #define RED 2
 #define YELLOW 3
 
+//---------------------------
+// BLUETOOTH
+//---------------------------
+#define PIN_BLUETOOTH_RX 3 // Arduino RX
+#define PIN_BLUETOOTH_TX 4 // Arduino TX
+#define BLUETOOTH_BPS 9600
+void bluetooth_init();
+void bluetooth_send_state();
+SoftwareSerial Bluetooth(PIN_BLUETOOTH_RX, PIN_BLUETOOTH_TX);
 
 // ------------------------------------------------
 // states del embebido
@@ -165,6 +175,7 @@ void start()
     button_init();
     distance_dog_init();
     distance_ball_init();
+    bluetooth_init();
   	actual_state = STATE_CHECKING;
     previous_time = millis();
 }
@@ -176,139 +187,139 @@ void fsm()
     catch_event();
     switch (actual_state)
     {
-    case STATE_CHECKING:
-        switch (event.type)
-        {
-        case EVENT_NOT_EMPTY:
-            //Activar actuadores
-            //LED VERDE
-            update_led(GREEN);
-            log("STATE_CHECKING", "EVENT_NOT_EMPTY");
-            actual_state = STATE_READY;
+        case STATE_CHECKING:
+            switch (event.type)
+            {
+            case EVENT_NOT_EMPTY:
+                //Activar actuadores
+                //LED VERDE
+                update_led(GREEN);
+                log("STATE_CHECKING", "EVENT_NOT_EMPTY");
+                actual_state = STATE_READY;
+                break;
+
+            case EVENT_EMPTY:
+                //Activar actuadores
+                //cambiarled(ROJO);
+                update_led(RED);
+                log("STATE_CHECKING", "EVENT_EMPTY");
+                //actual_state = STATE_EMPTY;       //este no iría si lo hacemos sin estado EMPTY
+                actual_state = STATE_CHECKING; //este iría si lo hacemos sin estado EMPTY
+                break;
+
+            case EVENT_CONTINUE:
+                log("STATE_CHECKING", "EVENT_CONTINUE");
+                actual_state = STATE_CHECKING;
+                break;
+
+            default:
+                break;
+            }
             break;
 
-        case EVENT_EMPTY:
-            //Activar actuadores
-            //cambiarled(ROJO);
-            update_led(RED);
-            log("STATE_CHECKING", "EVENT_EMPTY");
-            //actual_state = STATE_EMPTY;       //este no iría si lo hacemos sin estado EMPTY
-            actual_state = STATE_CHECKING; //este iría si lo hacemos sin estado EMPTY
+        case STATE_READY:
+            switch (event.type)
+            {
+            case EVENT_DOG_NEARBY:
+                //Activar actuadores
+                //LED AMARILLO
+                update_led(YELLOW);
+                time_waitDog_since = millis();
+                check_time_waitDog = true;
+                log("STATE_READY", "EVENT_DOG_NEARBY");
+                actual_state = STATE_DOG_DETECTED;
+                break;
+
+            case EVENT_BUTTON:
+                //Activar actuadores
+                //LED AMARILLO
+                //SERVIR PELOTA
+                update_led(YELLOW);
+                drop_ball();
+                log("STATE_READY", "EVENT_BUTTON");
+                actual_state = STATE_DROP_BALL;
+                break;
+
+            case EVENT_CONTINUE:
+                log("STATE_READY", "EVENT_CONTINUE");
+                actual_state = STATE_READY;
+                break;
+
+            default:
+                break;
+            }
             break;
 
-        case EVENT_CONTINUE:
-            log("STATE_CHECKING", "EVENT_CONTINUE");
-            actual_state = STATE_CHECKING;
+        case STATE_DOG_DETECTED:
+            switch (event.type)
+            {
+            case EVENT_TIMEOUT_WAIT:
+                //Activar actuadores
+                //SERVIR PELOTA
+                drop_ball();
+                log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
+                actual_state = STATE_DROP_BALL;
+                break;
+
+            case EVENT_BUTTON:
+                //Activar actuadores
+                //SERVIR PELOTA
+                drop_ball();
+                log("STATE_DOG_DETECTED", "EVENT_BUTTON");
+                actual_state = STATE_DROP_BALL;
+                break;
+
+            case EVENT_CONTINUE:
+                log("STATE_DOG_DETECTED", "EVENT_CONTINUE");
+                actual_state = STATE_DOG_DETECTED;
+                break;
+
+            default:
+                break;
+            }
             break;
 
-        default:
-            break;
-        }
-        break;
+        case STATE_DROP_BALL:
+            switch (event.type)
+            {
+            case EVENT_TIMEOUT_CLOSE_SERVO:
+                //Activar actuadores
+                //CERRAR SERVO
+                //APAGAR LED
+                close_servo();
+                update_led(NONE);
+                log("STATE_DROP_BALL", "EVENT_TIMEOUT_CLOSE_SERVO");
+                actual_state = STATE_END_OF_SERVICE;
+                break;
 
-    case STATE_READY:
-        switch (event.type)
-        {
-        case EVENT_DOG_NEARBY:
-            //Activar actuadores
-            //LED AMARILLO
-            update_led(YELLOW);
-            time_waitDog_since = millis();
-            check_time_waitDog = true;
-            log("STATE_READY", "EVENT_DOG_NEARBY");
-            actual_state = STATE_DOG_DETECTED;
-            break;
+            case EVENT_CONTINUE:
+                log("STATE_DROP_BALL", "EVENT_CONTINUE");
+                actual_state = STATE_DROP_BALL;
+                break;
 
-        case EVENT_BUTTON:
-            //Activar actuadores
-            //LED AMARILLO
-            //SERVIR PELOTA
-            update_led(YELLOW);
-            drop_ball();
-            log("STATE_READY", "EVENT_BUTTON");
-            actual_state = STATE_DROP_BALL;
+            default:
+                break;
+            }
             break;
 
-        case EVENT_CONTINUE:
-            log("STATE_READY", "EVENT_CONTINUE");
-            actual_state = STATE_READY;
-            break;
+        case STATE_END_OF_SERVICE:
+            switch (event.type)
+            {
+            case EVENT_DOG_AWAY:
 
-        default:
-            break;
-        }
-        break;
+                log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
+                actual_state = STATE_CHECKING;
+                break;
 
-    case STATE_DOG_DETECTED:
-        switch (event.type)
-        {
-        case EVENT_TIMEOUT_WAIT:
-            //Activar actuadores
-            //SERVIR PELOTA
-            drop_ball();
-            log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
-            actual_state = STATE_DROP_BALL;
+            case EVENT_CONTINUE:
+                log("STATE_END_OF_SERVICE", "EVENT_CONTINUE");
+                actual_state = STATE_END_OF_SERVICE;
+                break;
+                
+            default:
+                break;
+            }
             break;
-
-        case EVENT_BUTTON:
-            //Activar actuadores
-            //SERVIR PELOTA
-            drop_ball();
-            log("STATE_DOG_DETECTED", "EVENT_BUTTON");
-            actual_state = STATE_DROP_BALL;
-            break;
-
-        case EVENT_CONTINUE:
-            log("STATE_DOG_DETECTED", "EVENT_CONTINUE");
-            actual_state = STATE_DOG_DETECTED;
-            break;
-
-        default:
-            break;
-        }
-        break;
-
-    case STATE_DROP_BALL:
-        switch (event.type)
-        {
-        case EVENT_TIMEOUT_CLOSE_SERVO:
-            //Activar actuadores
-            //CERRAR SERVO
-            //APAGAR LED
-            close_servo();
-            update_led(NONE);
-            log("STATE_DROP_BALL", "EVENT_TIMEOUT_CLOSE_SERVO");
-            actual_state = STATE_END_OF_SERVICE;
-            break;
-
-        case EVENT_CONTINUE:
-            log("STATE_DROP_BALL", "EVENT_CONTINUE");
-            actual_state = STATE_DROP_BALL;
-            break;
-
-        default:
-            break;
-        }
-        break;
-
-    case STATE_END_OF_SERVICE:
-        switch (event.type)
-        {
-        case EVENT_DOG_AWAY:
-
-            log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
-            actual_state = STATE_CHECKING;
-            break;
-
-        case EVENT_CONTINUE:
-            log("STATE_END_OF_SERVICE", "EVENT_CONTINUE");
-            actual_state = STATE_END_OF_SERVICE;
-            break;
-            
-        default:
-            break;
-        }
-        break;
     }
 
     // Ya se atendió el event
@@ -396,7 +407,10 @@ void catch_event()
     if ((current_time - previous_time) > TIME_EVENT_MILIS)
     {
         if (verify_distance_dog() == true || verify_distance_ball() == true )
+        {
+            bluetooth_send_state();
             return;
+        }
         previous_time = current_time;
     }
     else
@@ -529,7 +543,36 @@ void rgb_init()
     digitalWrite(PIN_LED_GREEN, LOW);
     digitalWrite(PIN_LED_BLUE, LOW);
 }
-
+void bluetooth_init()
+{
+    Bluetooth.begin(BLUETOOTH_BPS);
+}
+void bluetooth_send_state()
+{
+    switch (actual_state)
+    {
+        case STATE_CHECKING:
+            Bluetooth.write("Ball DispenserEstado: STATE_CHECKING\n");
+            break;
+        case STATE_READY:
+            Bluetooth.write("Ball Dispenser Estado: STATE_READY\n");
+            break;
+        case STATE_EMPTY:
+            Bluetooth.write("Ball Dispenser Estado: STATE_EMPTY\n");
+            break;
+        case STATE_DOG_DETECTED:
+            Bluetooth.write("Ball Dispenser Estado: STATE_DOG_DETECTED\n");
+            break;
+        case STATE_DROP_BALL:
+            Bluetooth.write("Ball Dispenserr Estado: STATE_DROP_BALL\n");
+            break;
+        case STATE_END_OF_SERVICE:
+            Bluetooth.write("Ball Dispenser Estado: STATE_END_OF_SERVICE\n");
+            break;
+        default:
+            break;
+    }
+}
 void button_init()
 {
     pinMode(PIN_BUTTON, INPUT);
