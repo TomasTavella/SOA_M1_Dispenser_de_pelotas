@@ -375,6 +375,7 @@ void catch_event()
         time_waitDog_until = millis();
         if ((time_waitDog_until - time_waitDog_since) > TIME_WAIT_MILIS)
         {
+            bluetooth_send_state();
             event.type = EVENT_TIMEOUT_WAIT;
             time_waitDog_since = time_waitDog_until;
             check_time_waitDog = false;
@@ -388,6 +389,7 @@ void catch_event()
         time_servo_until = millis();
         if ((time_servo_until - time_servo_since) > TIME_SERVO_MILIS)
         {
+            bluetooth_send_state();
             event.type = EVENT_TIMEOUT_CLOSE_SERVO;
             time_servo_since = time_servo_until;
             check_time_servo = false;
@@ -397,6 +399,7 @@ void catch_event()
 
     if(verify_button() == true)
     {
+        bluetooth_send_state();
         event.type = EVENT_BUTTON;
         return;
     }
