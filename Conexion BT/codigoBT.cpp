@@ -1,5 +1,6 @@
-//#include <Servo.h>
-//#include <SoftwareSerial.h>
+
+#include <Servo.h>
+#include <SoftwareSerial.h>
 
 // ------------------------------------------------
 // Etiquetas
@@ -37,9 +38,9 @@ Servo Servomotor;
 #define DELAY_PULSE_2 2
 #define DELAY_PULSE_10 10
 #define SPEED_OF_SOUND_CM_PER_MICROSECOND 0.01723
-#define UMBRAL_DISTANCE_DOG 200
-#define UMBRAL_DISTANCE_BALL 40
-long distance_read(int distance_pin);
+#define UMBRAL_DISTANCE_DOG 20
+#define UMBRAL_DISTANCE_BALL 5
+//long distance_read(int distance_pin);
 //---------------------------
 // BUTTON INIT
 //---------------------------
@@ -60,11 +61,12 @@ long distance_read(int distance_pin);
 // ------------------------------------------------
 // Bluetooth
 // ------------------------------------------------
-#define BLUETOOTH_BUTTON 1
+//#define BLUETOOTH_BUTTON 1
 char bt_msg;
+char BLUETOOTH_BUTTON = '0';
 void bluetooth_send_state();
 bool verify_bluetooth();
-SoftwareSerial bluetooth(8, 9);
+SoftwareSerial bluetooth(3, 4);
 
 
 // ------------------------------------------------
@@ -181,6 +183,7 @@ void start()
     distance_ball_init();
     dogDetected = false;
   	actual_state = STATE_CHECKING;
+    bluetooth.println("Arduino Conectado!");
     bluetooth_send_state();
     previous_time = millis();
 }
@@ -321,6 +324,7 @@ void fsm()
             log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
             actual_state = STATE_CHECKING;
             bluetooth_send_state();
+            dogDetected = false;
             break;
 
         case EVENT_CONTINUE:
@@ -378,19 +382,19 @@ void bluetooth_send_state()
     switch(actual_state)
     {
     case STATE_CHECKING:
-        bluetooth.println(STATE_CHECKING); //0
+        bluetooth.println("CHECKING"); //0
         break;
     case STATE_READY:
-        bluetooth.println(STATE_READY); //1
+        bluetooth.println("READY"); //1
         break;
     case STATE_DOG_DETECTED:
-        bluetooth.println(STATE_DOG_DETECTED); //2
+        bluetooth.println("DOG DETECTED"); //2
         break;
     case STATE_DROP_BALL:
-        bluetooth.println(STATE_DROP_BALL); //3
+        bluetooth.println("DROP BALL"); //3
         break;
     case STATE_END_OF_SERVICE:
-        bluetooth.println(STATE_END_OF_SERVICE); //4
+        bluetooth.println("END OF SERVICE"); //4
         break;
     }
 }
@@ -433,7 +437,8 @@ void catch_event()
 
     if(verify_button() == true)
         return;
-
+    if(verify_bluetooth())
+        return;
     //verifico sensores distancia
     current_time = millis();
     if ((current_time - previous_time) > TIME_EVENT_MILIS)
@@ -455,6 +460,8 @@ void catch_event()
 void verify_distance_dog() 
 {
     int distance = distance_read(DISTANCE_SENSOR_PINTRIG_DOG, DISTANCE_SENSOR_PINECHO_DOG);
+    bluetooth.println(distance);
+    bluetooth.println(dogDetected);
     if(!dogDetected)
     {
         if(distance < UMBRAL_DISTANCE_DOG)  
@@ -465,10 +472,10 @@ void verify_distance_dog()
     }
     else
     {
-        if(distance >= UMBRAL_DISTANCE_DOG)  
+        if(distance > UMBRAL_DISTANCE_DOG)  
         {
             event.type = EVENT_DOG_AWAY;
-            dogDetected = false;
+            //dogDetected = false;
         }
     }
 }
@@ -476,6 +483,7 @@ void verify_distance_dog()
 void verify_distance_ball() 
 {
     int distance = distance_read(DISTANCE_SENSOR_PINTRIG_BALL, DISTANCE_SENSOR_PINECHO_BALL);
+    //bluetooth.println(distance);
     if(distance < UMBRAL_DISTANCE_BALL)
     { 
         log(distance);
@@ -494,6 +502,7 @@ bool verify_button()
     int button_value = digitalRead(PIN_BUTTON);
     if(button_value == HIGH)
     {
+        dogDetected = true;
         event.type = EVENT_BUTTON;
         return true;
     }
@@ -505,11 +514,15 @@ bool verify_bluetooth()
   if(bluetooth.available())
   {
     bt_msg = bluetooth.read();
+    //bluetooth.println("Lanzamiento Manual");
     if(bt_msg == BLUETOOTH_BUTTON)
     {
+        dogDetected = true;
         event.type = EVENT_BUTTON;
         return true;
     }
+    else
+        //bluetooth.println("BOTON DE LANZAMIENTO INCORRECTO");
     return false;
   }
   return false;
