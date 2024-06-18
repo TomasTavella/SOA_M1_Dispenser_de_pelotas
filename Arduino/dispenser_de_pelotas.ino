@@ -246,6 +246,7 @@ void fsm()
             update_led(YELLOW);
             time_waitDog_since = millis();
             check_time_waitDog = true;
+            dogDetected = true;
             log("STATE_READY", "EVENT_DOG_NEARBY");
             actual_state = STATE_DOG_DETECTED;
             bluetooth_send_state();
@@ -254,12 +255,14 @@ void fsm()
         case EVENT_BUTTON:
             update_led(YELLOW);
             drop_ball();
+            dogDetected = true;
             log("STATE_READY", "EVENT_BUTTON");
             actual_state = STATE_DROP_BALL;
             bluetooth_send_state();
             break;
         
         case EVENT_SEND_STATE_BT:
+            dogDetected = true;
             log("STATE_READY", "EVENT_SEND_STATE_BT");
             bluetooth_send_state();
             actual_state = STATE_CHECKING;
@@ -287,12 +290,14 @@ void fsm()
 
         case EVENT_BUTTON:
             drop_ball();
+            dogDetected = true;
             log("STATE_DOG_DETECTED", "EVENT_BUTTON");
             actual_state = STATE_DROP_BALL;
             bluetooth_send_state();
             break;
 
         case EVENT_SEND_STATE_BT:
+            dogDetected = true;
             log("STATE_DOG_DETECTED", "EVENT_SEND_STATE_BT");
             bluetooth_send_state();
             actual_state = STATE_CHECKING;
@@ -343,7 +348,7 @@ void fsm()
             log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
             actual_state = STATE_CHECKING;
             bluetooth_send_state();
-            //dogDetected = false;
+            dogDetected = false;
             break;
 
         case EVENT_SEND_STATE_BT:
@@ -469,6 +474,7 @@ void catch_event()
         }
     }
 
+    //verifico pulsacion del boton o pedido de la app por bluetooth
     if(verify_button() == true)
         return;
     if(verify_bluetooth())
@@ -495,14 +501,14 @@ void catch_event()
 void verify_distance_dog() 
 {
     int distance = distance_read(DISTANCE_SENSOR_PINTRIG_DOG, DISTANCE_SENSOR_PINECHO_DOG);
-    bluetooth.println(distance);
-    bluetooth.println(dogDetected);
+    //bluetooth.println(distance);
+    //bluetooth.println(dogDetected);
     if(!dogDetected)
     {
         if(distance < UMBRAL_DISTANCE_DOG)  
         {
             event.type = EVENT_DOG_NEARBY;
-            dogDetected = true;
+            //dogDetected = true;
         }
     }
     else
@@ -510,7 +516,7 @@ void verify_distance_dog()
         if(distance > UMBRAL_DISTANCE_DOG)  
         {
             event.type = EVENT_DOG_AWAY;
-            dogDetected = false;
+            //dogDetected = false;
         }
     }
 }
@@ -537,7 +543,7 @@ bool verify_button()
     int button_value = digitalRead(PIN_BUTTON);
     if(button_value == HIGH)
     {
-        dogDetected = true;
+        //dogDetected = true;
         event.type = EVENT_BUTTON;
         return true;
     }
@@ -569,7 +575,7 @@ bool verify_bluetooth()
     switch (bt_msg)
     {
     case BLUETOOTH_BUTTON:
-        dogDetected = true;
+        //dogDetected = true;
         event.type = EVENT_BUTTON;
         return true;
         break;
