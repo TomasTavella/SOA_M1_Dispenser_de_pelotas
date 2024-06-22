@@ -201,174 +201,172 @@ void fsm()
     case STATE_CHECKING:
         switch (event.type)
         {
-        case EVENT_NOT_EMPTY:
-            update_led(GREEN);
-            log("STATE_CHECKING", "EVENT_NOT_EMPTY");
-            actual_state = STATE_READY;
-            bluetooth_send_state();
-            emptyMessage = true; // la proxima vez que no haya pelota, avisa con mensaje por BT
-            break;
+            case EVENT_NOT_EMPTY:
+                update_led(GREEN);
+                log("STATE_CHECKING", "EVENT_NOT_EMPTY");
+                actual_state = STATE_READY;
+                bluetooth_send_state();
+                emptyMessage = true; // la proxima vez que no haya pelota, avisa con mensaje por BT
+                break;
 
-        case EVENT_EMPTY:
-            update_led(RED);
-            log("STATE_CHECKING", "EVENT_EMPTY");
-            send_empty_message();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_EMPTY:
+                update_led(RED);
+                log("STATE_CHECKING", "EVENT_EMPTY");
+                send_empty_message();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_BUTTON:
-            log("STATE_CHECKING", "EVENT_BUTTON");
-            emptyMessage = true;
-            send_empty_message();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_BUTTON:
+                log("STATE_CHECKING", "EVENT_BUTTON");
+                emptyMessage = true;
+                send_empty_message();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_SEND_STATE_BT:
-            log("STATE_CHECKING", "EVENT_SEND_STATE_BT");
-            bluetooth_send_state();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_SEND_STATE_BT:
+                log("STATE_CHECKING", "EVENT_SEND_STATE_BT");
+                bluetooth_send_state();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_CONTINUE:
-            log("STATE_CHECKING", "EVENT_CONTINUE");
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_CONTINUE:
+                log("STATE_CHECKING", "EVENT_CONTINUE");
+                actual_state = STATE_CHECKING;
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
         break;
 
     case STATE_READY:
         switch (event.type)
         {
-        case EVENT_DOG_NEARBY:
-            update_led(YELLOW);
-            time_waitDog_since = millis();
-            check_time_waitDog = true;
-            dogDetected = true;
-            log("STATE_READY", "EVENT_DOG_NEARBY");
-            actual_state = STATE_DOG_DETECTED;
-            bluetooth_send_state();
-            break;
+            case EVENT_DOG_NEARBY:
+                update_led(YELLOW);
+                time_waitDog_since = millis();
+                check_time_waitDog = true;
+                dogDetected = true;
+                log("STATE_READY", "EVENT_DOG_NEARBY");
+                actual_state = STATE_DOG_DETECTED;
+                bluetooth_send_state();
+                break;
 
-        case EVENT_BUTTON:
-            update_led(YELLOW);
-            drop_ball();
-            dogDetected = true;
-            log("STATE_READY", "EVENT_BUTTON");
-            actual_state = STATE_DROP_BALL;
-            bluetooth_send_state();
-            break;
-        
-        case EVENT_SEND_STATE_BT:
-            dogDetected = true;
-            log("STATE_READY", "EVENT_SEND_STATE_BT");
-            bluetooth_send_state();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_BUTTON:
+                update_led(YELLOW);
+                drop_ball();
+                dogDetected = true;
+                log("STATE_READY", "EVENT_BUTTON");
+                actual_state = STATE_DROP_BALL;
+                bluetooth_send_state();
+                break;
+            
+            case EVENT_SEND_STATE_BT:
+                dogDetected = true;
+                log("STATE_READY", "EVENT_SEND_STATE_BT");
+                bluetooth_send_state();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_CONTINUE:
-            log("STATE_READY", "EVENT_CONTINUE");
-            actual_state = STATE_READY;
-            break;
+            case EVENT_CONTINUE:
+                log("STATE_READY", "EVENT_CONTINUE");
+                actual_state = STATE_READY;
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
         break;
 
     case STATE_DOG_DETECTED:
         switch (event.type)
         {
-        case EVENT_TIMEOUT_WAIT:
-            drop_ball();
-            log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
-            actual_state = STATE_DROP_BALL;
-            bluetooth_send_state();
-            break;
+            case EVENT_TIMEOUT_WAIT:
+                drop_ball();
+                log("STATE_DOG_DETECTED", "EVENT_TIME_OUT_WAIT");
+                actual_state = STATE_DROP_BALL;
+                bluetooth_send_state();
+                break;
 
-        case EVENT_BUTTON:
-            drop_ball();
-            dogDetected = true;
-            log("STATE_DOG_DETECTED", "EVENT_BUTTON");
-            actual_state = STATE_DROP_BALL;
-            bluetooth_send_state();
-            break;
+            case EVENT_BUTTON:
+                drop_ball();
+                dogDetected = true;
+                log("STATE_DOG_DETECTED", "EVENT_BUTTON");
+                actual_state = STATE_DROP_BALL;
+                bluetooth_send_state();
+                break;
 
-        case EVENT_SEND_STATE_BT:
-            dogDetected = true;
-            log("STATE_DOG_DETECTED", "EVENT_SEND_STATE_BT");
-            bluetooth_send_state();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_SEND_STATE_BT:
+                dogDetected = true;
+                log("STATE_DOG_DETECTED", "EVENT_SEND_STATE_BT");
+                bluetooth_send_state();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_CONTINUE:
-            log("STATE_DOG_DETECTED", "EVENT_CONTINUE");
-            actual_state = STATE_DOG_DETECTED;
-            break;
+            case EVENT_CONTINUE:
+                log("STATE_DOG_DETECTED", "EVENT_CONTINUE");
+                actual_state = STATE_DOG_DETECTED;
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
         break;
 
     case STATE_DROP_BALL:
         switch (event.type)
         {
-        case EVENT_TIMEOUT_CLOSE_SERVO:
-            close_servo();
-            update_led(NONE);
-            log("STATE_DROP_BALL", "EVENT_TIMEOUT_CLOSE_SERVO");
-            actual_state = STATE_END_OF_SERVICE;
-            bluetooth_send_state();
-            break;
+            case EVENT_TIMEOUT_CLOSE_SERVO:
+                close_servo();
+                update_led(NONE);
+                log("STATE_DROP_BALL", "EVENT_TIMEOUT_CLOSE_SERVO");
+                actual_state = STATE_END_OF_SERVICE;
+                bluetooth_send_state();
+                break;
 
-        case EVENT_SEND_STATE_BT:
-            log("STATE_DROP_BALL", "EVENT_SEND_STATE_BT");
-            bluetooth_send_state();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_SEND_STATE_BT:
+                log("STATE_DROP_BALL", "EVENT_SEND_STATE_BT");
+                bluetooth_send_state();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_CONTINUE:
-            log("STATE_DROP_BALL", "EVENT_CONTINUE");
-            actual_state = STATE_DROP_BALL;
-            break;
+            case EVENT_CONTINUE:
+                log("STATE_DROP_BALL", "EVENT_CONTINUE");
+                actual_state = STATE_DROP_BALL;
+                break;
 
-        default:
-            break;
+            default:
+                break;
         }
         break;
 
     case STATE_END_OF_SERVICE:
         switch (event.type)
         {
-        case EVENT_DOG_AWAY:
+            case EVENT_DOG_AWAY:
 
-            log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
-            actual_state = STATE_CHECKING;
-            bluetooth_send_state();
-            dogDetected = false;
-            break;
+                log("STATE_END_OF_SERVICE", "EVENT_DOG_AWAY");
+                actual_state = STATE_CHECKING;
+                bluetooth_send_state();
+                dogDetected = false;
+                break;
 
-        case EVENT_SEND_STATE_BT:
-            log("STATE_END_OF_SERVICE", "EVENT_SEND_STATE_BT");
-            bluetooth_send_state();
-            actual_state = STATE_CHECKING;
-            break;
+            case EVENT_SEND_STATE_BT:
+                log("STATE_END_OF_SERVICE", "EVENT_SEND_STATE_BT");
+                bluetooth_send_state();
+                actual_state = STATE_CHECKING;
+                break;
 
-        case EVENT_CONTINUE:
-            log("STATE_END_OF_SERVICE", "EVENT_CONTINUE");
-            actual_state = STATE_END_OF_SERVICE;
-            break;
-            
-        default:
-            break;
+            case EVENT_CONTINUE:
+                log("STATE_END_OF_SERVICE", "EVENT_CONTINUE");
+                actual_state = STATE_END_OF_SERVICE;
+                break;
+                
+            default:
+                break;
         }
         break;
     }
-
-    // Ya se atendió el event
     event.type = EVENT_CONTINUE;
     event.value = VALUE_CONTINUE;
 }
@@ -383,27 +381,26 @@ void update_led(int color)
     
     switch (color)
     {
-    case GREEN:
-        digitalWrite(PIN_LED_RED, LOW);
-        digitalWrite(PIN_LED_GREEN, HIGH);
-        digitalWrite(PIN_LED_BLUE, LOW);
-        break;
-    case YELLOW:
-        digitalWrite(PIN_LED_RED, HIGH);
-        digitalWrite(PIN_LED_GREEN, HIGH);
-        digitalWrite(PIN_LED_BLUE, LOW);
-        break;
-    case RED:
-        digitalWrite(PIN_LED_RED, HIGH);
-        digitalWrite(PIN_LED_GREEN, LOW);
-        digitalWrite(PIN_LED_BLUE, LOW);
-        break;
-    case NONE:
-        digitalWrite(PIN_LED_RED, LOW);
-        digitalWrite(PIN_LED_GREEN, LOW);
-        digitalWrite(PIN_LED_BLUE, LOW);
-        break;
-        
+        case GREEN:
+            digitalWrite(PIN_LED_RED, LOW);
+            digitalWrite(PIN_LED_GREEN, HIGH);
+            digitalWrite(PIN_LED_BLUE, LOW);
+            break;
+        case YELLOW:
+            digitalWrite(PIN_LED_RED, HIGH);
+            digitalWrite(PIN_LED_GREEN, HIGH);
+            digitalWrite(PIN_LED_BLUE, LOW);
+            break;
+        case RED:
+            digitalWrite(PIN_LED_RED, HIGH);
+            digitalWrite(PIN_LED_GREEN, LOW);
+            digitalWrite(PIN_LED_BLUE, LOW);
+            break;
+        case NONE:
+            digitalWrite(PIN_LED_RED, LOW);
+            digitalWrite(PIN_LED_GREEN, LOW);
+            digitalWrite(PIN_LED_BLUE, LOW);
+            break;
     }
 }
 
@@ -412,19 +409,19 @@ void bluetooth_send_state()
     switch(actual_state)
     {
     case STATE_CHECKING:
-        bluetooth.println("CHECKING");
+        bluetooth.print("CHECKING");
         break;
     case STATE_READY:
-        bluetooth.println("READY");
+        bluetooth.print("READY");
         break;
     case STATE_DOG_DETECTED:
-        bluetooth.println("DOG DETECTED");
+        bluetooth.print("DOG_DETECTED");
         break;
     case STATE_DROP_BALL:
-        bluetooth.println("DROP BALL");
+        bluetooth.print("DROP_BALL");
         break;
     case STATE_END_OF_SERVICE:
-        bluetooth.println("END OF SERVICE");
+        bluetooth.print("END_OF_SERVICE");
         break;
     }
 }
@@ -550,21 +547,6 @@ bool verify_button()
     return false;
 }
 
-// bool verify_bluetooth()
-// {
-//   if(bluetooth.available())
-//   {
-//     bt_msg = bluetooth.read();
-//     //bluetooth.println("Lanzamiento Manual");
-//     if(bt_msg == BLUETOOTH_BUTTON)
-//     {
-//         dogDetected = true;
-//         event.type = EVENT_BUTTON;
-//         return true;
-//     }
-//   }
-//   return false;
-// }
 
 bool verify_bluetooth()
 {
@@ -574,19 +556,19 @@ bool verify_bluetooth()
     //bluetooth.println("Lanzamiento Manual");
     switch (bt_msg)
     {
-    case BLUETOOTH_BUTTON:
-        //dogDetected = true;
-        event.type = EVENT_BUTTON;
-        return true;
-        break;
+        case BLUETOOTH_BUTTON:
+            //dogDetected = true;
+            event.type = EVENT_BUTTON;
+            return true;
+            break;
 
-    case BLUETOOTH_STATE_REQUEST:
-        event.type = EVENT_SEND_STATE_BT;
-        return true;
-        break;
+        case BLUETOOTH_STATE_REQUEST:
+            event.type = EVENT_SEND_STATE_BT;
+            return true;
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
   }
   return false;
@@ -594,16 +576,16 @@ bool verify_bluetooth()
 
 long distance_read(int distance_pintrig, int distance_pinecho) 
 {
-  digitalWrite(distance_pintrig, LOW);
-  delayMicroseconds(DELAY_PULSE_2);
+    digitalWrite(distance_pintrig, LOW);
+    delayMicroseconds(DELAY_PULSE_2);
 
-  digitalWrite(distance_pintrig, HIGH);
-  delayMicroseconds(DELAY_PULSE_10);
+    digitalWrite(distance_pintrig, HIGH);
+    delayMicroseconds(DELAY_PULSE_10);
   
-  digitalWrite(distance_pintrig, LOW);
-  pinMode(distance_pinecho, INPUT);
+    digitalWrite(distance_pintrig, LOW);
+    pinMode(distance_pinecho, INPUT);
 
-  return (pulseIn(distance_pinecho, HIGH))* SPEED_OF_SOUND_CM_PER_MICROSECOND; 
+    return (pulseIn(distance_pinecho, HIGH))* SPEED_OF_SOUND_CM_PER_MICROSECOND; 
 }
 //---------------------------
 // Servo Implementacion
