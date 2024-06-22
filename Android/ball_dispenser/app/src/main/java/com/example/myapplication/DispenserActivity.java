@@ -1,5 +1,5 @@
 package com.example.myapplication;
-
+import java.io.*;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -54,7 +54,7 @@ public class DispenserActivity extends AppCompatActivity {
 
         checkPermissions();
         btnState.setBackgroundResource(R.drawable.btn_drop_red);
-        simulateArduinoMessages();
+        //simulateArduinoMessages();
     }
     private void initViews() {
         tvBluetoothStatus = findViewById(R.id.tvBluetoothStatus);
@@ -106,7 +106,7 @@ public class DispenserActivity extends AppCompatActivity {
         Set<BluetoothDevice> pairedDevices = bluetoothAdapter_G.getBondedDevices();
 
         for (BluetoothDevice device : pairedDevices) {
-            if (device.getName().equals("Galaxy A54 5G")) {
+            if (device.getName().equals("Dispenser")) {
                 bluetoothDevice_G = device;
                 break;
             }
@@ -163,7 +163,10 @@ public class DispenserActivity extends AppCompatActivity {
 
                     bytes = mmInStream.read(buffer);
                     String readMessage = new String(buffer, 0, bytes);
-                    runOnUiThread(() -> Toast.makeText(DispenserActivity.this, "Mensaje recibido: " + readMessage, Toast.LENGTH_SHORT).show());
+                    System.out.println("|" + readMessage + "|");
+                    //runOnUiThread(() -> Toast.makeText(DispenserActivity.this, "Mensaje recibido: " + readMessage, Toast.LENGTH_SHORT).show());
+                    Log.d(TAG, "messageBLUE: "+ readMessage);
+
                     handleArduinoMessage(readMessage);
                 } catch (IOException e) {
                     updateBluetoothStatus(false);
@@ -197,7 +200,7 @@ public class DispenserActivity extends AppCompatActivity {
             DispenserState state;
             try
             {
-                state = DispenserState.valueOf(message.replace(" ", "_").toUpperCase());
+                state = DispenserState.valueOf(message);
             }
             catch (IllegalArgumentException e)
             {
@@ -206,13 +209,13 @@ public class DispenserActivity extends AppCompatActivity {
 
             if (state != null)
             {
-                tvStateLabel.setText("Estado: " + state.getLabel());
+                tvStateLabel.setText("Estado: " + message);
                 btnState.setBackgroundResource(state.getBackgroundResource());
             }
             else
             {
                 btnState.setBackgroundResource(R.drawable.btn_drop_red);
-                tvStateLabel.setText("Estado: Desconocido");
+                tvStateLabel.setText("Estado: CHECKING");
             }
         });
     }
@@ -229,15 +232,15 @@ public class DispenserActivity extends AppCompatActivity {
                     Thread.sleep(5000);
 
                     Log.d(TAG, "simulateArduinoMessages: Enviando mensaje DOG DETECTED");
-                    runOnUiThread(() -> handleArduinoMessage("DOG DETECTED"));
+                    runOnUiThread(() -> handleArduinoMessage("DOG_DETECTED"));
                     Thread.sleep(5000);
 
                     Log.d(TAG, "simulateArduinoMessages: Enviando mensaje DROP BALL");
-                    runOnUiThread(() -> handleArduinoMessage("DROP BALL"));
+                    runOnUiThread(() -> handleArduinoMessage("DROP_BALL"));
                     Thread.sleep(5000);
 
                     Log.d(TAG, "simulateArduinoMessages: Enviando mensaje END OF SERVICE");
-                    runOnUiThread(() -> handleArduinoMessage("END OF SERVICE"));
+                    runOnUiThread(() -> handleArduinoMessage("END_OF_SERVICE"));
                     Thread.sleep(5000);
                 }
             } catch (InterruptedException e) {
