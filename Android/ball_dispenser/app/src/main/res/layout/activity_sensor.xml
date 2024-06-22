@@ -7,4 +7,37 @@
     android:layout_height="match_parent"
     tools:context=".SensorActivity">
 
+
+    <TextView
+        android:id="@+id/tvSensorStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvInstruction"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="296dp"
+        android:text="Estado del sensor: Esperando..."
+        android:textColor="#000"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.443"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/tvInstruction"
+        android:layout_width="352dp"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="132dp"
+        android:layout_marginBottom="261dp"
+        android:text="Sacude el dispositivo para cambiar el color de fondo"
+        android:textColor="#000"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/tvSensorStatus"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
