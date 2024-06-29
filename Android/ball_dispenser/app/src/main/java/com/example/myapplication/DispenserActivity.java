@@ -187,7 +187,6 @@ public class DispenserActivity extends AppCompatActivity {
                     System.out.println("|" + readMessage + "|");
                     //runOnUiThread(() -> Toast.makeText(DispenserActivity.this, "Mensaje recibido: " + readMessage, Toast.LENGTH_SHORT).show());
                     Log.d(TAG, "messageBLUE: "+ readMessage);
-
                     handleArduinoMessage(readMessage);
                 } catch (IOException e)
                 {
