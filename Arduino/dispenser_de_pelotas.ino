@@ -265,7 +265,7 @@ void fsm()
                 dogDetected = true;
                 log("STATE_READY", "EVENT_SEND_STATE_BT");
                 bluetooth_send_state();
-                actual_state = STATE_CHECKING;
+                actual_state = STATE_READY;
                 break;
 
             case EVENT_CONTINUE:
