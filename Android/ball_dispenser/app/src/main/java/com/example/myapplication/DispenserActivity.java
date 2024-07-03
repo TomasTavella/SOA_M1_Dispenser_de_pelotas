@@ -27,7 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class DispenserActivity extends AppCompatActivity {
+public class DispenserActivity extends AppCompatActivity
+{
     private static final int REQUEST_BLUETOOTH_PERMISSION = 1;
     private static final String DROP_BALL = "0";
     private Button btnState;
@@ -98,7 +99,8 @@ public class DispenserActivity extends AppCompatActivity {
             connectToBluetoothDevice();
         }
     }
-    private void connectToBluetoothDevice() {
+    private void connectToBluetoothDevice()
+    {
         int btPermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH);
         int btAdminPermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN);
         int locationPermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
@@ -148,7 +150,8 @@ public class DispenserActivity extends AppCompatActivity {
     {
         tvBluetoothStatus.setText(isConnected ? "Bluetooth: On" : "Bluetooth: Off");
     }
-    private class ConnectedThread extends Thread {
+    private class ConnectedThread extends Thread
+    {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
@@ -184,9 +187,6 @@ public class DispenserActivity extends AppCompatActivity {
                 {
                     bytes = mmInStream.read(buffer);
                     String readMessage = new String(buffer, 0, bytes);
-                    System.out.println("|" + readMessage + "|");
-                    //runOnUiThread(() -> Toast.makeText(DispenserActivity.this, "Mensaje recibido: " + readMessage, Toast.LENGTH_SHORT).show());
-                    Log.d(TAG, "messageBLUE: "+ readMessage);
                     handleArduinoMessage(readMessage);
                 } catch (IOException e)
                 {
@@ -195,7 +195,8 @@ public class DispenserActivity extends AppCompatActivity {
                 }
             }
         }
-        public void write(String message) {
+        public void write(String message)
+        {
             try
             {
                 mmOutStream.write(message.getBytes());
@@ -247,7 +248,8 @@ public class DispenserActivity extends AppCompatActivity {
         Intent intent = new Intent(DispenserActivity.this, SensorActivity.class);
         startActivity(intent);
     }
-    public enum DispenserState {
+    public enum DispenserState
+    {
         CHECKING(R.drawable.btn_drop_red, "Checking"),
         READY(R.drawable.btn_drop_green, "Ready"),
         DOG_DETECTED(R.drawable.btn_drop_yellow, "Dog Detected"),
