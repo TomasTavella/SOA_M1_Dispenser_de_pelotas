@@ -142,7 +142,6 @@ void log(const char *msg)
 {
     Serial.println(msg);
 }
-
 void log(int val)
 {
     Serial.println(val);
@@ -169,14 +168,14 @@ void start()
 {
     Serial.begin(9600);
     bluetooth.begin(9600);
-  	servo_init();
+    servo_init();
     rgb_init();
     button_init();
     distance_dog_init();
     distance_ball_init();
     dogDetected = false;
     emptyMessage = true;
-  	actual_state = STATE_CHECKING;
+    actual_state = STATE_CHECKING;
     bluetooth_send_state();
     previous_time = millis();
 }
